@@ -8,14 +8,14 @@ sudo cp -i /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 # Add Gateway API CRDs
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
+GATEWAY_API_VERSION=v1.4.1
+GWAPI_BASE="https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/${GATEWAY_API_VERSION}/config/crd"
 
-# Add TLSRoute 
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml
+kubectl apply -f ${GWAPI_BASE}/standard/gateway.networking.k8s.io_gatewayclasses.yaml
+kubectl apply -f ${GWAPI_BASE}/standard/gateway.networking.k8s.io_gateways.yaml
+kubectl apply -f ${GWAPI_BASE}/standard/gateway.networking.k8s.io_httproutes.yaml
+kubectl apply -f ${GWAPI_BASE}/standard/gateway.networking.k8s.io_referencegrants.yaml
+kubectl apply -f ${GWAPI_BASE}/standard/gateway.networking.k8s.io_grpcroutes.yaml
 
 # Cilium Installation
 CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
