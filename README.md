@@ -35,6 +35,12 @@ Ingress is handled by the **Cilium Gateway API**. The `Gateway` is fronted by a 
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
+## Pre-requisites
+
+You should have `tailscale` installed and a tailscale network in place.
+
+When you know the tailscale network, you can configure the `gateway.yaml` file and specify the correct wildcard hostname.
+
 ## Install
 
 Simply execute the installer as `sudo`:
