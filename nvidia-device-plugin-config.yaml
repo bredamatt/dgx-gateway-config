@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nvidia-device-plugin
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nvidia-device-plugin-config
+  namespace: nvidia-device-plugin
+data:
+  any: |-                       # 'any' = default profile applied to all nodes
+    version: v1
+    flags:
+      migStrategy: none         # GB10 has no MIG, so this stays 'none'
+    sharing:
+      timeSlicing:
+        resources:
+          - name: nvidia.com/gpu
+            replicas: 4          # GB10 advertised as nvidia.com/gpu: 4 (oversubscription, no isolation)

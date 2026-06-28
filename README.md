@@ -35,9 +35,38 @@ Ingress is handled by the **Cilium Gateway API**. The `Gateway` is fronted by a 
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
+## GPU time-slicing
+
+The GB10 has no MIG support, so it is shared via the device plugin's **time-slicing**. The plugin is configured with `replicas: 4` (see `nvidia-device-plugin-config.yaml`), which makes the one physical GPU appear to the scheduler as `nvidia.com/gpu: 4`. Up to four pods can then each request one "GPU" and run concurrently. This is **oversubscription, not isolation**: all four slices are the same chip, kernels are context-switched (serialized) onto it, and the pods share the GB10's unified LPDDR5X memory with no per-pod cap. Treat it as cooperative sharing among your own workloads, not multi-tenant isolation.
+
+Each GPU pod must set `runtimeClassName: nvidia` and request `nvidia.com/gpu: 1`.
+
+```
+  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐    each pod:
+  │  Pod A  │  │  Pod B  │  │  Pod C  │  │  Pod D  │      runtimeClassName: nvidia
+  │ gpu: 1  │  │ gpu: 1  │  │ gpu: 1  │  │ gpu: 1  │      limits: nvidia.com/gpu: 1
+  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘
+       │            │            │            │
+       └────────────┴─────┬──────┴────────────┘
+                          ▼
+   ┌────────────────────────────────────────────────────┐
+   │  NVIDIA device plugin   (timeSlicing replicas: 4)    │
+   │  advertises  nvidia.com/gpu: 4                       │
+   └───────────────────────┬────────────────────────────┘
+                           │  4 "GPUs" = 4 handles to the SAME device
+                           ▼
+   ┌────────────────────────────────────────────────────┐
+   │              1 × physical GB10 GPU                   │
+   │  • time-shared: kernels context-switch, serialized  │
+   │  • shared unified LPDDR5X memory — NO isolation      │
+   └────────────────────────────────────────────────────┘
+```
+
 ## Pre-requisites
 
 You should have `tailscale` installed and a tailscale network in place.
+
+You should also have the **NVIDIA Container Toolkit** installed on the host. K3s detects it at startup and auto-creates the `nvidia` RuntimeClass and containerd runtime that the GPU device plugin relies on. Without it, the device-plugin pod fails and the GB10 is never advertised as `nvidia.com/gpu`.
 
 When you know the tailscale network, you can configure the `gateway.yaml` file and specify the correct wildcard hostname.
 

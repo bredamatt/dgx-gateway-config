@@ -38,6 +38,25 @@ cilium install \
 
 cilium status --wait
 
+# GPU enablement (NVIDIA device plugin for the GB10)
+# k3s already auto-creates the 'nvidia' RuntimeClass once the NVIDIA container runtime is detected.
+# The device-plugin chart's nodeAffinity needs a GPU label; with no NFD installed we set it ourselves.
+kubectl label nodes --all nvidia.com/gpu.present=true --overwrite
+
+# Advertise the GB10 as the nvidia.com/gpu schedulable resource (with time-slicing)
+NVDP_VERSION=0.19.3
+helm repo add nvdp https://nvidia.github.io/k8s-device-plugin --force-update
+helm repo update
+
+# Create the namespace + time-slicing ConfigMap before installing the plugin
+kubectl apply -f nvidia-device-plugin-config.yaml
+
+helm upgrade --install nvdp nvdp/nvidia-device-plugin \
+  --version ${NVDP_VERSION} \
+  --namespace nvidia-device-plugin --create-namespace \
+  --set runtimeClassName=nvidia \
+  --set config.name=nvidia-device-plugin-config
+
 # Install the Cilium LB IP Pool
 kubectl apply -f ip-pool.yaml
 
